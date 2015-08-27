@@ -95,7 +95,7 @@ public class GMVPlan extends AllGMV {
 
         Map<String, Double> gmvPlanMap = this.getGMVPlanMap(sDay);
 
-        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
         Connection conBi = dsBi.getConnection();
 
         PreparedStatement pstmt = conBi.prepareStatement("update gmv_predict_daily set plan_gmv= ?, plan_gmv_complete=?, updatetime=now() where s_day = ? ");

@@ -89,7 +89,7 @@ public class GMVPredict extends AllGMV {
 
     public int[] updateActualGMV(Map<String,Double> map) throws ClassNotFoundException, SQLException {
 
-        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
         Connection conBi = dsBi.getConnection();
 
         PreparedStatement pstmt = conBi.prepareStatement("update gmv_predict_daily set actual_gmv= ?, updatetime=now() where s_day = ? ");
@@ -132,7 +132,7 @@ public class GMVPredict extends AllGMV {
 
         Map<String, Double> predictMap = this.getPredictMap(sDay);
 
-        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
         Connection conBi = dsBi.getConnection();
 
         PreparedStatement pstmt = conBi.prepareStatement("update gmv_predict_daily set predict_gmv= ?, predict_gmv_complete=?, updatetime=now() where s_day = ? ");

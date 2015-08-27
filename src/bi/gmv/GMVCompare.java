@@ -26,7 +26,7 @@ public class GMVCompare extends AllGMV {
 
         Map<String, Double> actualGMVMap = this.getActualGMV();
 
-        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
         Connection conBi = dsBi.getConnection();
 
         PreparedStatement pstmt = conBi.prepareStatement("update gmv_compare_weekly set actual_gmv= ?, updatetime=now() where s_day = ? ");

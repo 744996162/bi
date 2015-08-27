@@ -3,6 +3,8 @@ package bi.gtgmv;
  * Created by Administrator on 2015/7/20.
  */
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -16,14 +18,16 @@ import static java.sql.DriverManager.getConnection;
 
 public class GtTicketFromHbOs {
 
+
+
+    protected String gtSourceDbName = "81gtgj";
+    protected String biDbName = "91bi";
+
+
     public Map<String,Float> getGtTicketFromHb(String s_day) throws Exception {
 
-        String driver = "com.mysql.jdbc.Driver";
-        String url = "jdbc:mysql://58.83.130.89:3306/gtgj?&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull";
-        String user = "querynew";
-        String password = "query1216";
-        Class.forName(driver);
-        Connection conn = getConnection(url, user, password);
+        ComboPooledDataSource dsSourceGt = new ComboPooledDataSource(this.gtSourceDbName);
+        Connection conSourceGt = dsSourceGt.getConnection();
 
 
         String sql = "select count(*) order_num, sum(ticket_count) ticket_num, sum(amount) amount, " +
@@ -39,7 +43,7 @@ public class GtTicketFromHbOs {
                 "and hbgj_order_12306.create_time <=?  " +
                 "and (hbgj_order_12306.status = 1 or hbgj_order_12306.status=2) " ;
 
-        PreparedStatement pstmt = conn.prepareStatement(sql);
+        PreparedStatement pstmt = conSourceGt.prepareStatement(sql);
 
         String s_day_in_start = s_day + " " + "00:00:00";
         String s_day_in_end = s_day + " " + "23:59:59";
@@ -81,21 +85,19 @@ public class GtTicketFromHbOs {
         }
 //        System.out.println(map.toString());
 //        System.out.println(sql);
+        pstmt.close();
+        conSourceGt.close();
 
         return map;
     }
 
     public int updateGtTicketFromHb(String s_day, Map<String,Float> map) throws ClassNotFoundException, SQLException {
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
+        Connection conBi = dsBi.getConnection();
 
 
         PreparedStatement pstmt =
-                conn_bi.prepareStatement("insert gtgj_ticket_from_hb_new (s_day,order_num,ticket_num,amount,order_num_ios,ticket_num_ios,amount_ios,order_num_android,ticket_num_android,amount_android,createtime,updatetime) " +
+                conBi.prepareStatement("insert gtgj_ticket_from_hb_new (s_day,order_num,ticket_num,amount,order_num_ios,ticket_num_ios,amount_ios,order_num_android,ticket_num_android,amount_android,createtime,updatetime) " +
                         "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now()) ");
 
         pstmt.setString(1, s_day);
@@ -117,7 +119,7 @@ public class GtTicketFromHbOs {
         } catch (Exception e) {
 //            pstmt = conn_bi.prepareStatement("insert gtgj_amount_daily (s_day,success_amount,change_amount,createtime,updatetime) values (?, ?, ?, now(), now()) ");
 
-            pstmt = conn_bi.prepareStatement("update gtgj_ticket_from_hb_new set order_num=?, ticket_num=?, amount=?, order_num_ios=?, ticket_num_ios=?, amount_ios=?, order_num_android=?, ticket_num_android=?, amount_android=?, " +
+            pstmt = conBi.prepareStatement("update gtgj_ticket_from_hb_new set order_num=?, ticket_num=?, amount=?, order_num_ios=?, ticket_num_ios=?, amount_ios=?, order_num_android=?, ticket_num_android=?, amount_android=?, " +
                     "updatetime=now() where s_day = ? " ) ;
             pstmt.setFloat(1, map.get("order_num"));
             pstmt.setFloat(2, map.get("ticket_num"));
@@ -133,6 +135,8 @@ public class GtTicketFromHbOs {
 
             pstmt.setString(10, s_day);
             int result = pstmt.executeUpdate();
+            pstmt.close();
+            conBi.close();
             return result;
         }
     }
@@ -162,21 +166,6 @@ public class GtTicketFromHbOs {
         String s_yestoday = GtTicketFromHbOs.getDate(s_today, 1);
         GtTicketFromHbOs ticket = new GtTicketFromHbOs();
         ticket.update(s_yestoday);
-
-
-//        for (int i=1; i<=12; i++){
-//            String day = GtTicketFromHbOs.getDate(s_today, i);
-//            ticket.update(day);
-//            System.out.println(day);
-//        }
-
-//        ticket.update("2015-07-18");
-//        ticket.update("2015-07-17");
-//        ticket.update("2015-07-16");
-//        ticket.update("2015-07-15");
-//        ticket.update("2015-07-14");
-//        ticket.update("2015-07-13");
-//        System.out.println();
 
     }
 

@@ -4,6 +4,8 @@ package bi.gtgmv;
  * Created by Administrator on 2015/7/10.
  */
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import java.io.*;
 import java.sql.*;
 import java.text.ParseException;
@@ -15,15 +17,13 @@ import java.util.Date;
 import static java.sql.DriverManager.*;
 
 public class GtAmount {
+    protected String gtSourceDbName = "81gtgj";
+    protected String biDbName = "91bi";
 
     public  float getChangeAmount(String s_day) throws Exception{
 
-        String driver = "com.mysql.jdbc.Driver";
-        String url = "jdbc:mysql://58.83.130.89:3306/gtgj?&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull";
-        String user = "querynew";
-        String password = "query1216";
-        Class.forName(driver);
-        Connection conn = getConnection(url, user, password);
+        ComboPooledDataSource dsGt = new ComboPooledDataSource(this.gtSourceDbName);
+        Connection conGt = dsGt.getConnection();
 
         float money_back_amount = 0L;
         float money_add_amount = 0L;
@@ -35,8 +35,8 @@ public class GtAmount {
         int money_add_conut = 0;
         int count = 0;
 
-        PreparedStatement ordersPstmt = conn.prepareStatement("select card_no, change_time,refund_time, status, price from user_sub_order where order_id=? ");
-        PreparedStatement pstmt = conn.prepareStatement("select distinct(order_id) oid from user_sub_order where create_time >= ? and create_time <= ? and ( status='改签票' or ( status='已退票' and change_time is not null and change_time!=refund_time )) ");
+        PreparedStatement ordersPstmt = conGt.prepareStatement("select card_no, change_time,refund_time, status, price from user_sub_order where order_id=? ");
+        PreparedStatement pstmt = conGt.prepareStatement("select distinct(order_id) oid from user_sub_order where create_time >= ? and create_time <= ? and ( status='改签票' or ( status='已退票' and change_time is not null and change_time!=refund_time )) ");
 
 
         String s_day_in_start = s_day + " " + "00:00:00";
@@ -133,18 +133,11 @@ public class GtAmount {
 
 
     public Long getSuccAmount(String s_day) throws Exception {
-        String driver = "com.mysql.jdbc.Driver";
-        String url = "jdbc:mysql://58.83.130.89:3306/gtgj";
-        String user = "querynew";
-        String password = "query1216";
-
-        Class.forName(driver);
-
-        Connection conn = getConnection(url, user, password);
+        ComboPooledDataSource dsGt = new ComboPooledDataSource(this.gtSourceDbName);
+        Connection conGt = dsGt.getConnection();
 
 
-
-        PreparedStatement pstmt = conn.prepareStatement("select sum(succ_amount) amount from global_statistics where s_day = ? ");
+        PreparedStatement pstmt = conGt.prepareStatement("select sum(succ_amount) amount from global_statistics where s_day = ? ");
 
         pstmt.setString(1, s_day);
         ResultSet rs = pstmt.executeQuery();
@@ -153,19 +146,17 @@ public class GtAmount {
 //            Long amount = rs.getLong("amount");
             return rs.getLong("amount");
         }
+
+        pstmt.close();
+        conGt.close();
         return 0L;
     }
 
     public int updataGtAmount(String s_day, float succAmount, float changeAmount) throws ClassNotFoundException, SQLException {
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
+        Connection conBi = dsBi.getConnection();
 
-
-        PreparedStatement pstmt = conn_bi.prepareStatement("insert gtgj_amount_daily (s_day,success_amount,change_amount,createtime,updatetime) values (?, ?, ?, now(), now()) ");
+        PreparedStatement pstmt = conBi.prepareStatement("insert gtgj_amount_daily (s_day,success_amount,change_amount,createtime,updatetime) values (?, ?, ?, now(), now()) ");
 
         pstmt.setString(1, s_day);
         pstmt.setFloat(2, succAmount);
@@ -176,7 +167,7 @@ public class GtAmount {
         } catch (Exception e) {
 //            pstmt = conn_bi.prepareStatement("insert gtgj_amount_daily (s_day,success_amount,change_amount,createtime,updatetime) values (?, ?, ?, now(), now()) ");
 
-            pstmt = conn_bi.prepareStatement("update gtgj_amount_daily set success_amount=?, change_amount=?, updatetime=now() where s_day = ? " ) ;
+            pstmt = conBi.prepareStatement("update gtgj_amount_daily set success_amount=?, change_amount=?, updatetime=now() where s_day = ? " ) ;
             pstmt.setFloat(1, succAmount);
             pstmt.setFloat(2, changeAmount);
             pstmt.setString(3, s_day);
@@ -187,6 +178,7 @@ public class GtAmount {
 
     public int update_amount(String s_day) throws Exception {
         float changeAmount = this.getChangeAmount(s_day);
+        System.out.println(changeAmount);
         float successAmount = this.getSuccAmount(s_day);
         int state = this.updataGtAmount(s_day, successAmount, changeAmount);
         return state;
@@ -220,7 +212,6 @@ public class GtAmount {
         GtAmount gt = new GtAmount();
         int state = gt.update_amount(s_yestoday);
         System.out.println(state);
-
 
 //        System.out.println(s_today + "\t" + s_yestoday);
 

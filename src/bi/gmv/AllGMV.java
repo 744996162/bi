@@ -71,7 +71,7 @@ public class AllGMV {
     public Map<String, Float> getGtGMV(String s_day) throws Exception{
 
 
-        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
         Connection conBi = dsBi.getConnection();
 
 
@@ -99,7 +99,7 @@ public class AllGMV {
 //
 //
     public Map<String, Float> getHotelGMV(String s_day) throws Exception{
-        ComboPooledDataSource dsSourceHb = new ComboPooledDataSource(hbSourceDbName);
+        ComboPooledDataSource dsSourceHb = new ComboPooledDataSource(this.hbSourceDbName);
         Connection conHbSource = dsSourceHb.getConnection();
 
 
@@ -145,7 +145,7 @@ public class AllGMV {
 
     public Map<String,Double> getActualGMV() throws ClassNotFoundException, SQLException {
 
-        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
         Connection conBi = dsBi.getConnection();
 
         String sql = "SELECT s_day, actual_gmv FROM gmv_base ";
@@ -167,7 +167,7 @@ public class AllGMV {
     }
 
     public Map<String,Double> getFifteenBillionGMV() throws ClassNotFoundException, SQLException {
-        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
         Connection conBi = dsBi.getConnection();
 
         String sql = "SELECT s_day, 15billion FROM gmv_base ";
@@ -189,7 +189,7 @@ public class AllGMV {
     }
 
     public Map<String,Double> getFifteenBillionGMVNew() throws ClassNotFoundException, SQLException {
-        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
         Connection conBi = dsBi.getConnection();
 
         String sql = "SELECT s_day, 15billion_new FROM gmv_base ";
@@ -218,7 +218,7 @@ public class AllGMV {
 
       */
 
-        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
         Connection conBi = dsBi.getConnection();
 
         PreparedStatement pstmt = conBi.prepareStatement("update gmv_base set actual_gmv= ?, updatetime=now() where s_day = ? ");

@@ -3,6 +3,8 @@ package bi.gtgmv;
  * Created by Administrator on 2015/7/20.
  */
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import java.io.*;
 import java.sql.*;
 import java.text.ParseException;
@@ -15,15 +17,13 @@ import static java.sql.DriverManager.getConnection;
 
 public class GtTicketFromHb {
 
+    protected String gtSourceDbName = "81gtgj";
+    protected String biDbName = "91bi";
+
     public Map<String,Float> getGtTicketFromHb(String s_day) throws Exception {
 
-        String driver = "com.mysql.jdbc.Driver";
-        String url = "jdbc:mysql://58.83.130.89:3306/gtgj?&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull";
-        String user = "querynew";
-        String password = "query1216";
-        Class.forName(driver);
-        Connection conn = getConnection(url, user, password);
-
+        ComboPooledDataSource dsSourceGt = new ComboPooledDataSource(this.gtSourceDbName);
+        Connection conSourceGt = dsSourceGt.getConnection();
 
         String sql = "select count(*) order_num, sum(ticket_count) ticket_num, sum(amount) amount " +
                 "FROM hbgj_order_12306 " +
@@ -32,7 +32,7 @@ public class GtTicketFromHb {
                 "and hbgj_order_12306.create_time <=?  " +
                 "and (hbgj_order_12306.status = 1 or hbgj_order_12306.status=2) " ;
 
-        PreparedStatement pstmt = conn.prepareStatement(sql);
+        PreparedStatement pstmt = conSourceGt.prepareStatement(sql);
 
         String s_day_in_start = s_day + " " + "00:00:00";
         String s_day_in_end = s_day + " " + "23:59:59";
@@ -56,19 +56,17 @@ public class GtTicketFromHb {
 //        System.out.println(map.toString());
 //        System.out.println(sql);
 
+        pstmt.close();
+        conSourceGt.close();
         return map;
     }
 
     public int updateGtTicketFromHb(String s_day, Map<String,Float> map) throws ClassNotFoundException, SQLException {
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(this.biDbName);
+        Connection conBi = dsBi.getConnection();
 
 
-        PreparedStatement pstmt = conn_bi.prepareStatement("insert gtgj_ticket_from_hb (s_day,order_num,ticket_num,amount,createtime,updatetime) values (?, ?, ?, ?, now(), now()) ");
+        PreparedStatement pstmt = conBi.prepareStatement("insert gtgj_ticket_from_hb (s_day,order_num,ticket_num,amount,createtime,updatetime) values (?, ?, ?, ?, now(), now()) ");
 
         pstmt.setString(1, s_day);
         pstmt.setFloat(2, map.get("order_num"));
@@ -80,12 +78,14 @@ public class GtTicketFromHb {
         } catch (Exception e) {
 //            pstmt = conn_bi.prepareStatement("insert gtgj_amount_daily (s_day,success_amount,change_amount,createtime,updatetime) values (?, ?, ?, now(), now()) ");
 
-            pstmt = conn_bi.prepareStatement("update gtgj_ticket_from_hb set order_num=?, ticket_num=?, amount=?, updatetime=now() where s_day = ? " ) ;
+            pstmt = conBi.prepareStatement("update gtgj_ticket_from_hb set order_num=?, ticket_num=?, amount=?, updatetime=now() where s_day = ? " ) ;
             pstmt.setFloat(1, map.get("order_num"));
             pstmt.setFloat(2, map.get("ticket_num"));
             pstmt.setFloat(3, map.get("amount"));
             pstmt.setString(4, s_day);
             int result = pstmt.executeUpdate();
+            pstmt.close();
+            conBi.close();
             return result;
         }
     }
