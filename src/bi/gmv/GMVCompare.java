@@ -47,12 +47,14 @@ public class GMVCompare extends AllGMV {
 
 //        System.out.println(c);
 //        System.out.println(s);
-        //周一更新过去一周的数据
+//        周一更新过去一周的数据
         if (s == 2) for (int i = 1; i <= 7; i++) {
             String tempDay = AllGMV_gtAll.getDate(s_today, i);
             this.updateCompare(tempDay);
         }
+
     }
+
 
 
     public static void main(String[] args) throws ParseException, SQLException, ClassNotFoundException {

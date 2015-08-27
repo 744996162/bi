@@ -206,7 +206,7 @@ public class GtAmount {
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
         String s_today = df.format(new Date());
-        String s_yestoday = GtAmount.getDate(s_today, 1);
+        String s_yestoday = GtAmount.getDate(s_today, 2);
 
 
         GtAmount gt = new GtAmount();

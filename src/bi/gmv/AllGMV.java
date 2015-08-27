@@ -214,7 +214,7 @@ public class AllGMV {
     public int updateAllGMV(String s_day, Map<String,Float> map) throws ClassNotFoundException, SQLException {
 
       /*
-        每天更新 'gmv_predict' 表
+        每天更新 'gmv_base' 表
 
       */
 
@@ -257,13 +257,22 @@ public class AllGMV {
         this.update(s_yestoday);
     }
 
+
+    public void updateHis() throws Exception {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        String s_today = df.format(new Date());
+        for (int i=1; i<=238; i++){
+            String s_tempDay = AllGMV.getDate(s_today, i);
+            System.out.println(s_tempDay);
+            this.update(s_tempDay);
+        }
+
+
+    }
     public static void main(String[] args) throws Exception {
+
         AllGMV allGMV = new AllGMV();
         allGMV.updateMain();
-
-
-//        allGMV.update("2015-08-23");
-
     }
 
 }
