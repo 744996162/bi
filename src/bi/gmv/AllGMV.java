@@ -6,6 +6,8 @@ package bi.gmv;
  * Created by Administrator on 2015/7/20.
  */
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,14 +25,13 @@ import static java.sql.DriverManager.getConnection;
 public class AllGMV {
 
 
-    public Map<String, Float> getHbGMV(String s_day) throws Exception {
-        String driver = "com.mysql.jdbc.Driver";
-        String url = "jdbc:mysql://58.83.130.79:3308/skyhotel?&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull";
-        String user = "query";
-        String password = "qureybyno";
-        Class.forName(driver);
-        Connection conn = getConnection(url, user, password);
+    protected String hbSourceDbName = "79skyhotel";
+    protected String biDbName = "91bi";
 
+    public Map<String, Float> getHbGMV(String s_day) throws Exception {
+
+        ComboPooledDataSource dsSourceHb = new ComboPooledDataSource(this.hbSourceDbName);
+        Connection conSourceHb = dsSourceHb.getConnection();
 
         String sql = "select sum(A.price) hb_GMV " +
                 "from  " +
@@ -48,7 +49,7 @@ public class AllGMV {
                 "and (ORDERTYPE!='GRAB' or ordertype is NULL) " +
                 ") as A" ;
 
-        PreparedStatement pstmt = conn.prepareStatement(sql);
+        PreparedStatement pstmt = conSourceHb.prepareStatement(sql);
 
         pstmt.setString(1, s_day);
         pstmt.setString(2, s_day);
@@ -62,24 +63,23 @@ public class AllGMV {
 
         }
         pstmt.close();
-        conn.close();
+        conSourceHb.close();
 
         return map;
     }
 
     public Map<String, Float> getGtGMV(String s_day) throws Exception{
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
 
-        String sql = "SELECT sum(success_amount + change_amount) gt_GMV " +
+
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        Connection conBi = dsBi.getConnection();
+
+
+        String sql = "SELECT sum(success_amount + change_amount + create_amount) gt_GMV " +
                      "FROM gtgj_amount_daily " +
                      "where s_day = ? ";
 
-        PreparedStatement pstmt = conn_bi.prepareStatement(sql);
+        PreparedStatement pstmt = conBi.prepareStatement(sql);
 
         pstmt.setString(1, s_day);
 
@@ -92,19 +92,15 @@ public class AllGMV {
         }
 
         pstmt.close();
-        conn_bi.close();
+        conBi.close();
 
         return map;
     }
 //
 //
     public Map<String, Float> getHotelGMV(String s_day) throws Exception{
-        String driver = "com.mysql.jdbc.Driver";
-        String url = "jdbc:mysql://58.83.130.79:3308/skyhotel?&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull";
-        String user = "query";
-        String password = "qureybyno";
-        Class.forName(driver);
-        Connection conn = getConnection(url, user, password);
+        ComboPooledDataSource dsSourceHb = new ComboPooledDataSource(hbSourceDbName);
+        Connection conHbSource = dsSourceHb.getConnection();
 
 
         String sql = "select sum(totalprice) hotel_GMV " +
@@ -112,7 +108,7 @@ public class AllGMV {
                     "where DATE_FORMAT(createtime,'%Y-%m-%d')=? " +
                     "and (gdsdesc in ('已成单','已结账','已确认','已入住','已取消') or hotelorderid is not null) " ;
 
-        PreparedStatement pstmt = conn.prepareStatement(sql);
+        PreparedStatement pstmt = conHbSource.prepareStatement(sql);
 
         pstmt.setString(1, s_day);
 
@@ -122,12 +118,10 @@ public class AllGMV {
         while (rs.next()) {
             Float hotel_GMV = rs.getFloat("hotel_GMV");
             map.put("hotel_GMV", hotel_GMV);
-
         }
         pstmt.close();
-        conn.close();
+        conHbSource.close();
         return map;
-
     }
 
     public Map<String, Float> getAllGMV(String s_day) throws Exception{
@@ -150,16 +144,13 @@ public class AllGMV {
     }
 
     public Map<String,Double> getActualGMV() throws ClassNotFoundException, SQLException {
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        Connection conBi = dsBi.getConnection();
 
         String sql = "SELECT s_day, actual_gmv FROM gmv_base ";
 
-        PreparedStatement pstmt = conn_bi.prepareStatement(sql);
+        PreparedStatement pstmt = conBi.prepareStatement(sql);
 
         ResultSet rs = pstmt.executeQuery();
         Map<String,Double> map = new HashMap<String, Double>();
@@ -170,22 +161,18 @@ public class AllGMV {
         }
 
         pstmt.close();
-        conn_bi.close();
+        conBi.close();
 
         return map;
     }
 
     public Map<String,Double> getFifteenBillionGMV() throws ClassNotFoundException, SQLException {
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        Connection conBi = dsBi.getConnection();
 
         String sql = "SELECT s_day, 15billion FROM gmv_base ";
 
-        PreparedStatement pstmt = conn_bi.prepareStatement(sql);
+        PreparedStatement pstmt = conBi.prepareStatement(sql);
 
         ResultSet rs = pstmt.executeQuery();
         Map<String,Double> map = new HashMap<String, Double>();
@@ -196,22 +183,18 @@ public class AllGMV {
         }
 
         pstmt.close();
-        conn_bi.close();
+        conBi.close();
 
         return map;
     }
 
     public Map<String,Double> getFifteenBillionGMVNew() throws ClassNotFoundException, SQLException {
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        Connection conBi = dsBi.getConnection();
 
         String sql = "SELECT s_day, 15billion_new FROM gmv_base ";
 
-        PreparedStatement pstmt = conn_bi.prepareStatement(sql);
+        PreparedStatement pstmt = conBi.prepareStatement(sql);
 
         ResultSet rs = pstmt.executeQuery();
         Map<String,Double> map = new HashMap<String, Double>();
@@ -222,14 +205,10 @@ public class AllGMV {
         }
 
         pstmt.close();
-        conn_bi.close();
+        conBi.close();
 
         return map;
     }
-
-
-
-
 
 
     public int updateAllGMV(String s_day, Map<String,Float> map) throws ClassNotFoundException, SQLException {
@@ -239,21 +218,15 @@ public class AllGMV {
 
       */
 
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        Connection conBi = dsBi.getConnection();
 
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
-
-
-        PreparedStatement pstmt = conn_bi.prepareStatement("update gmv_base set actual_gmv= ?, updatetime=now() where s_day = ? ");
+        PreparedStatement pstmt = conBi.prepareStatement("update gmv_base set actual_gmv= ?, updatetime=now() where s_day = ? ");
         pstmt.setFloat(1, map.get("all_GMV"));
         pstmt.setString(2, s_day);
         int result = pstmt.executeUpdate();
         pstmt.close();
-        conn_bi.close();
+        conBi.close();
         return result;
     }
 

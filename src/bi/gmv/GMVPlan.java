@@ -1,5 +1,7 @@
 package bi.gmv;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -12,6 +14,9 @@ import static java.sql.DriverManager.getConnection;
 
 /**
  * Created by Administrator on 2015/8/14.
+ *
+ *
+ * update table gmv_predict_daily
  */
 
 
@@ -90,14 +95,10 @@ public class GMVPlan extends AllGMV {
 
         Map<String, Double> gmvPlanMap = this.getGMVPlanMap(sDay);
 
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        Connection conBi = dsBi.getConnection();
 
-        PreparedStatement pstmt = conn_bi.prepareStatement("update gmv_predict_daily set plan_gmv= ?, plan_gmv_complete=?, updatetime=now() where s_day = ? ");
+        PreparedStatement pstmt = conBi.prepareStatement("update gmv_predict_daily set plan_gmv= ?, plan_gmv_complete=?, updatetime=now() where s_day = ? ");
 
 //        将一组参数添加到此 PreparedStatement 对象的批处理命令中。
         for(Map.Entry<String, Double> entry: gmvPlanMap.entrySet()) {
@@ -115,7 +116,7 @@ public class GMVPlan extends AllGMV {
         int[] result = pstmt.executeBatch();
 
         pstmt.close();
-        conn_bi.close();
+        conBi.close();
         return result;
     }
 

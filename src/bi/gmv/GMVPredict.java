@@ -2,6 +2,8 @@ package bi.gmv;
 
 
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -19,11 +21,6 @@ import static java.sql.DriverManager.getConnection;
 
 
 public class GMVPredict extends AllGMV {
-
-    /**返回日期list sDay为截止日期，i为之前几个星期
-    例如 sDay='2015-08-17' weekCount=1 返回'2015-08-10'到'2015-08-16'之间的日期(含)
-
-     */
 
     private  Map<String, Double> actualGMV;
     private  Map<String, Double> fifteenBillionGMVNew;
@@ -92,15 +89,10 @@ public class GMVPredict extends AllGMV {
 
     public int[] updateActualGMV(Map<String,Double> map) throws ClassNotFoundException, SQLException {
 
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        Connection conBi = dsBi.getConnection();
 
-
-        PreparedStatement pstmt = conn_bi.prepareStatement("update gmv_predict_daily set actual_gmv= ?, updatetime=now() where s_day = ? ");
+        PreparedStatement pstmt = conBi.prepareStatement("update gmv_predict_daily set actual_gmv= ?, updatetime=now() where s_day = ? ");
 
 
         for(Map.Entry<String, Double> entry: map.entrySet()) {
@@ -116,7 +108,7 @@ public class GMVPredict extends AllGMV {
         }
         int[] result = pstmt.executeBatch();
         pstmt.close();
-        conn_bi.close();
+        conBi.close();
         return result;
     }
 
@@ -140,14 +132,10 @@ public class GMVPredict extends AllGMV {
 
         Map<String, Double> predictMap = this.getPredictMap(sDay);
 
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        Connection conBi = dsBi.getConnection();
 
-        PreparedStatement pstmt = conn_bi.prepareStatement("update gmv_predict_daily set predict_gmv= ?, predict_gmv_complete=?, updatetime=now() where s_day = ? ");
+        PreparedStatement pstmt = conBi.prepareStatement("update gmv_predict_daily set predict_gmv= ?, predict_gmv_complete=?, updatetime=now() where s_day = ? ");
 
 //        将一组参数添加到此 PreparedStatement 对象的批处理命令中。
         for(Map.Entry<String, Double> entry: predictMap.entrySet()) {
@@ -168,7 +156,7 @@ public class GMVPredict extends AllGMV {
         int[] result = pstmt.executeBatch();
 
         pstmt.close();
-        conn_bi.close();
+        conBi.close();
         return result;
     }
 

@@ -1,5 +1,7 @@
 package bi.gmv;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -13,6 +15,9 @@ import static java.sql.DriverManager.getConnection;
 
 /**
  * Created by Administrator on 2015/8/14.
+ *
+ *
+ * update table gmv_compare_weekly
  */
 public class GMVCompare extends AllGMV {
 
@@ -20,21 +25,16 @@ public class GMVCompare extends AllGMV {
     public int updateCompare(String sDay) throws SQLException, ClassNotFoundException {
 
         Map<String, Double> actualGMVMap = this.getActualGMV();
-//        Double actualGMV = actualGMVMap.get(sDay);
 
-        String driver = "com.mysql.jdbc.Driver";
-        String url_bi = "jdbc:mysql://58.83.130.91:3306/bi";
-        String user_bi = "bi";
-        String password_bi = "bIbi_0820";
-        Class.forName(driver);
-        Connection conn_bi = getConnection(url_bi, user_bi, password_bi);
+        ComboPooledDataSource dsBi = new ComboPooledDataSource(biDbName);
+        Connection conBi = dsBi.getConnection();
 
-        PreparedStatement pstmt = conn_bi.prepareStatement("update gmv_compare_weekly set actual_gmv= ?, updatetime=now() where s_day = ? ");
+        PreparedStatement pstmt = conBi.prepareStatement("update gmv_compare_weekly set actual_gmv= ?, updatetime=now() where s_day = ? ");
         pstmt.setDouble(1, actualGMVMap.get(sDay));
         pstmt.setString(2, sDay);
         int result = pstmt.executeUpdate();
         pstmt.close();
-        conn_bi.close();
+        conBi.close();
         return result;
     }
 
